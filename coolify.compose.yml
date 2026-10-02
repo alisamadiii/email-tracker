@@ -7,7 +7,8 @@ services:
       - SERVICE_FQDN_EMAILTRACKER_3000
       - DATABASE_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/email_tracker
       - BETTER_AUTH_SECRET=${SERVICE_BASE64_64_AUTHSECRET}
-      - BETTER_AUTH_URL=${SERVICE_FQDN_EMAILTRACKER_3000}
+      # Bare SERVICE_FQDN has no scheme/port — Better Auth needs the scheme.
+      - BETTER_AUTH_URL=https://${SERVICE_FQDN_EMAILTRACKER}
     depends_on:
       postgres:
         condition: service_healthy

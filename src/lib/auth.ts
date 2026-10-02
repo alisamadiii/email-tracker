@@ -7,7 +7,17 @@ import { count } from 'drizzle-orm';
 import { db } from '@/db';
 import * as schema from '@/db/schema';
 
+// Tolerate host-only values (e.g. Coolify's SERVICE_FQDN_* magic vars,
+// which resolve to "host:port" without a scheme).
+function normalizeBaseUrl(raw: string | undefined) {
+  if (!raw) return undefined;
+  const value = raw.trim();
+  if (/^https?:\/\//.test(value)) return value;
+  return `https://${value.replace(/:\d+$/, '')}`;
+}
+
 export const auth = betterAuth({
+  baseURL: normalizeBaseUrl(process.env.BETTER_AUTH_URL),
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
