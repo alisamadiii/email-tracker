@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Globe, Loader2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Globe, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
   createAppAccount,
   updateAppAccount,
 } from '@/app/actions/app-accounts';
+import { createCategory } from '@/app/actions/categories';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,14 +24,16 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
-import type { AppRow, EmailOption } from './types';
+import type { AppRow, CategoryOption, EmailOption } from './types';
 
-const CATEGORY_SUGGESTIONS = ['Business', 'Personal', 'Dev', 'Social', 'Finance'];
+const NO_CATEGORY = 'none';
+const NEW_CATEGORY = '__new__';
 
 function previewFaviconUrl(url: string) {
   try {
@@ -38,6 +41,27 @@ function previewFaviconUrl(url: string) {
       .hostname;
     if (!hostname.includes('.')) return null;
     return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+  } catch {
+    return null;
+  }
+}
+
+// Common second-level labels so "bbc.co.uk" yields "Bbc", not "Co".
+const SECOND_LEVEL_TLDS = new Set(['co', 'com', 'net', 'org', 'gov', 'ac', 'edu']);
+
+function nameFromUrl(raw: string): string | null {
+  try {
+    const hostname = new URL(raw.includes('://') ? raw : `https://${raw}`)
+      .hostname.replace(/^www\./, '');
+    const parts = hostname.split('.').filter(Boolean);
+    if (parts.length < 2) return null;
+
+    let base = parts[parts.length - 2];
+    if (parts.length >= 3 && SECOND_LEVEL_TLDS.has(base)) {
+      base = parts[parts.length - 3];
+    }
+    if (!base) return null;
+    return base.charAt(0).toUpperCase() + base.slice(1);
   } catch {
     return null;
   }
@@ -53,7 +77,7 @@ export function AppDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   emails: EmailOption[];
-  categories: string[];
+  categories: CategoryOption[];
   editing: AppRow | null;
 }) {
   return (
@@ -84,7 +108,7 @@ function AppForm({
   onOpenChange,
 }: {
   emails: EmailOption[];
-  categories: string[];
+  categories: CategoryOption[];
   editing: AppRow | null;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -92,9 +116,64 @@ function AppForm({
     editing?.emailId ?? emails[0]?.id ?? ''
   );
   const [url, setUrl] = useState(editing?.url ?? '');
+  const [name, setName] = useState(editing?.name ?? '');
+  // Auto-fill stops the moment the name is typed by hand (or when editing).
+  const [nameEdited, setNameEdited] = useState(Boolean(editing));
+  const [categoryId, setCategoryId] = useState(
+    editing?.categoryId ?? NO_CATEGORY
+  );
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  // A just-created category may not be in the server-provided list yet.
+  const [createdCategory, setCreatedCategory] = useState<CategoryOption | null>(
+    null
+  );
   const [saving, setSaving] = useState(false);
 
+  const allCategories = useMemo(() => {
+    if (createdCategory && !categories.some((c) => c.id === createdCategory.id)) {
+      return [...categories, createdCategory].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+    }
+    return categories;
+  }, [categories, createdCategory]);
+
+  function handleCategorySelect(value: string) {
+    if (value === NEW_CATEGORY) {
+      setAddingCategory(true);
+      return;
+    }
+    setCategoryId(value);
+  }
+
+  async function handleCreateCategory() {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    setCreatingCategory(true);
+    const { id, error } = await createCategory(trimmed);
+    setCreatingCategory(false);
+    if (error || !id) {
+      toast.error(error ?? 'Could not create category');
+      return;
+    }
+    setCreatedCategory({ id, name: trimmed });
+    setCategoryId(id);
+    setAddingCategory(false);
+    setNewCategoryName('');
+  }
+
   const preview = url.trim() ? previewFaviconUrl(url.trim()) : null;
+
+  function handleUrlChange(value: string) {
+    setUrl(value);
+    if (!nameEdited) {
+      const derived = nameFromUrl(value.trim());
+      if (derived) setName(derived);
+      else if (!value.trim()) setName('');
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -105,7 +184,7 @@ function AppForm({
       name: form.get('name') as string,
       emailId,
       url: (form.get('url') as string) || null,
-      category: (form.get('category') as string) || null,
+      categoryId: categoryId === NO_CATEGORY ? null : categoryId,
       notes: (form.get('notes') as string) || null,
       signupDate: (form.get('signupDate') as string) || null,
     };
@@ -133,7 +212,11 @@ function AppForm({
                 id="name"
                 name="name"
                 placeholder="Hostinger"
-                defaultValue={editing?.name}
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameEdited(e.target.value.trim().length > 0);
+                }}
                 required
               />
             </div>
@@ -157,10 +240,11 @@ function AppForm({
               name="url"
               placeholder="https://hostinger.com"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => handleUrlChange(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              The favicon is fetched from this once and cached.
+              Name auto-fills from the domain; favicon is fetched once and
+              cached.
             </p>
           </div>
 
@@ -189,21 +273,57 @@ function AppForm({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                name="category"
-                list="category-suggestions"
-                placeholder="Business"
-                defaultValue={editing?.category ?? ''}
-              />
-              <datalist id="category-suggestions">
-                {[...new Set([...CATEGORY_SUGGESTIONS, ...categories])].map(
-                  (c) => (
-                    <option key={c} value={c} />
-                  )
-                )}
-              </datalist>
+              <Label>Category</Label>
+              {addingCategory ? (
+                <div className="flex gap-2">
+                  <Input
+                    autoFocus
+                    placeholder="New category"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCreateCategory();
+                      }
+                      if (e.key === 'Escape') setAddingCategory(false);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    aria-label="Create category"
+                    disabled={creatingCategory || !newCategoryName.trim()}
+                    onClick={handleCreateCategory}
+                  >
+                    {creatingCategory ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Plus className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Select value={categoryId} onValueChange={handleCategorySelect}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="No category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_CATEGORY}>No category</SelectItem>
+                    {allCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                    <SelectSeparator />
+                    <SelectItem value={NEW_CATEGORY}>
+                      <Plus className="size-4" />
+                      New category…
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="signupDate">Signup date</Label>

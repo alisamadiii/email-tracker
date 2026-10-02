@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
-import { appAccounts, emails } from '@/db/schema';
+import { appAccounts, categories, emails } from '@/db/schema';
 import { fetchFavicon } from '@/lib/favicon';
 import { requireSession } from '@/lib/session';
 
@@ -12,7 +12,7 @@ type AppAccountInput = {
   name: string;
   emailId: string;
   url: string | null;
-  category: string | null;
+  categoryId: string | null;
   notes: string | null;
   signupDate: string | null;
 };
@@ -22,7 +22,7 @@ function clean(input: AppAccountInput) {
     name: input.name.trim(),
     emailId: input.emailId,
     url: input.url?.trim() || null,
-    category: input.category?.trim() || null,
+    categoryId: input.categoryId || null,
     notes: input.notes?.trim() || null,
     signupDate: input.signupDate || null,
   };
@@ -36,6 +36,16 @@ async function validate(userId: string, input: ReturnType<typeof clean>) {
     where: and(eq(emails.id, input.emailId), eq(emails.userId, userId)),
   });
   if (!owned) return 'Unknown email selected';
+
+  if (input.categoryId) {
+    const category = await db.query.categories.findFirst({
+      where: and(
+        eq(categories.id, input.categoryId),
+        eq(categories.userId, userId)
+      ),
+    });
+    if (!category) return 'Unknown category selected';
+  }
 
   return null;
 }

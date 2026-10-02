@@ -48,7 +48,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { AppDialog } from './app-dialog';
-import type { AppRow, EmailOption } from './types';
+import type { AppRow, CategoryOption, EmailOption } from './types';
 
 type SortKey = 'recent' | 'name' | 'signupDate';
 
@@ -95,9 +95,11 @@ export function AppIcon({
 export function DashboardClient({
   emails,
   apps,
+  categories,
 }: {
   emails: EmailOption[];
   apps: AppRow[];
+  categories: CategoryOption[];
 }) {
   const [search, setSearch] = useState('');
   const [emailFilter, setEmailFilter] = useState(ALL);
@@ -112,22 +114,24 @@ export function DashboardClient({
     [emails]
   );
 
-  const categories = useMemo(
-    () =>
-      [...new Set(apps.map((a) => a.category).filter(Boolean))].sort() as string[],
-    [apps]
+  const categoryById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories]
   );
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = apps.filter((app) => {
       if (emailFilter !== ALL && app.emailId !== emailFilter) return false;
-      if (categoryFilter !== ALL && app.category !== categoryFilter)
+      if (categoryFilter !== ALL && app.categoryId !== categoryFilter)
         return false;
+      const categoryName = app.categoryId
+        ? (categoryById.get(app.categoryId)?.name ?? '')
+        : '';
       if (
         q &&
         !app.name.toLowerCase().includes(q) &&
-        !(app.category ?? '').toLowerCase().includes(q) &&
+        !categoryName.toLowerCase().includes(q) &&
         !(app.notes ?? '').toLowerCase().includes(q)
       )
         return false;
@@ -140,7 +144,7 @@ export function DashboardClient({
         return (b.signupDate ?? '').localeCompare(a.signupDate ?? '');
       return b.createdAt.localeCompare(a.createdAt);
     });
-  }, [apps, search, emailFilter, categoryFilter, sort]);
+  }, [apps, search, emailFilter, categoryFilter, sort, categoryById]);
 
   function openAdd() {
     setEditing(null);
@@ -243,8 +247,8 @@ export function DashboardClient({
             <SelectContent>
               <SelectItem value={ALL}>All categories</SelectItem>
               {categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -324,6 +328,9 @@ export function DashboardClient({
           {visible.map((app) => {
             const email = emailById.get(app.emailId);
             const color = email?.color ?? '#6366f1';
+            const categoryName = app.categoryId
+              ? categoryById.get(app.categoryId)?.name
+              : null;
             const menu = (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -363,8 +370,8 @@ export function DashboardClient({
                         {email?.address}
                       </p>
                     </div>
-                    {app.category && (
-                      <Badge variant="outline">{app.category}</Badge>
+                    {categoryName && (
+                      <Badge variant="outline">{categoryName}</Badge>
                     )}
                     <Badge
                       variant="secondary"
@@ -397,8 +404,8 @@ export function DashboardClient({
                   >
                     {email?.label}
                   </Badge>
-                  {app.category && (
-                    <Badge variant="outline">{app.category}</Badge>
+                  {categoryName && (
+                    <Badge variant="outline">{categoryName}</Badge>
                   )}
                   {app.signupDate && (
                     <span className="inline-flex items-center gap-1">

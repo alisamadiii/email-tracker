@@ -5,12 +5,17 @@ export type EmailOption = {
   color: string;
 };
 
+export type CategoryOption = {
+  id: string;
+  name: string;
+};
+
 export type AppRow = {
   id: string;
   emailId: string;
   name: string;
   url: string | null;
-  category: string | null;
+  categoryId: string | null;
   notes: string | null;
   signupDate: string | null;
   favicon: string | null;

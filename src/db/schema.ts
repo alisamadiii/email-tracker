@@ -5,6 +5,7 @@ import {
   boolean,
   uuid,
   date,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 // ---------- Better Auth tables ----------
@@ -73,6 +74,19 @@ export const emails = pgTable('emails', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+export const categories = pgTable(
+  'categories',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.name)]
+);
+
 export const appAccounts = pgTable('app_accounts', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id')
@@ -83,7 +97,9 @@ export const appAccounts = pgTable('app_accounts', {
     .references(() => emails.id, { onDelete: 'restrict' }),
   name: text('name').notNull(),
   url: text('url'),
-  category: text('category'),
+  categoryId: uuid('category_id').references(() => categories.id, {
+    onDelete: 'set null',
+  }),
   notes: text('notes'),
   signupDate: date('signup_date'),
   favicon: text('favicon'),
@@ -93,3 +109,4 @@ export const appAccounts = pgTable('app_accounts', {
 
 export type Email = typeof emails.$inferSelect;
 export type AppAccount = typeof appAccounts.$inferSelect;
+export type Category = typeof categories.$inferSelect;
