@@ -1,0 +1,20 @@
+# Local development: Postgres only. Run the app with `pnpm dev`.
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - '5433:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=email_tracker
+    volumes:
+      - et-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  et-dev-db:

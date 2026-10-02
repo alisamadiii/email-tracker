@@ -1,0 +1,36 @@
+# Paste this into Coolify as a "Docker Compose" resource.
+# Coolify fills the SERVICE_* magic variables automatically.
+services:
+  email-tracker:
+    image: ghcr.io/alisamadiii/email-tracker:latest
+    environment:
+      - SERVICE_FQDN_EMAILTRACKER_3000
+      - DATABASE_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/email_tracker
+      - BETTER_AUTH_SECRET=${SERVICE_BASE64_64_AUTHSECRET}
+      - BETTER_AUTH_URL=${SERVICE_FQDN_EMAILTRACKER_3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/health || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_DB=email_tracker
+    volumes:
+      - et-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  et-db:
