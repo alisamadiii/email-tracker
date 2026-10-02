@@ -127,8 +127,8 @@ export function EmailsClient({ emails }: { emails: EmailRow[] }) {
       ) : (
         <div className="grid gap-3">
           {emails.map((email) => (
-            <Card key={email.id}>
-              <CardContent className="flex items-center gap-4 py-4">
+            <Card key={email.id} size="sm">
+              <CardContent className="flex items-center gap-4">
                 <span
                   className="size-3 shrink-0 rounded-full"
                   style={{ backgroundColor: email.color }}

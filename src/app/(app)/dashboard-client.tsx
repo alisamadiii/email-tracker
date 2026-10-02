@@ -20,7 +20,15 @@ import { toast } from 'sonner';
 import { deleteAppAccount } from '@/app/actions/app-accounts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -346,8 +354,8 @@ export function DashboardClient({
 
             if (view === 'list') {
               return (
-                <Card key={app.id}>
-                  <CardContent className="flex items-center gap-3 py-3">
+                <Card key={app.id} size="sm">
+                  <CardContent className="flex items-center gap-3">
                     <AppIcon app={app} color={color} className="size-8" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{app.name}</p>
@@ -372,46 +380,42 @@ export function DashboardClient({
             }
 
             return (
-              <Card key={app.id} className="relative">
-                <CardContent className="grid gap-3 p-4">
-                  <div className="flex items-start justify-between">
-                    <AppIcon app={app} color={color} />
-                    {menu}
-                  </div>
-                  <div>
-                    <p className="font-semibold">{app.name}</p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {email?.address}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Badge
-                      variant="secondary"
-                      style={{ color }}
-                      className="font-medium"
+              <Card key={app.id}>
+                <CardHeader>
+                  <AppIcon app={app} color={color} className="mb-2" />
+                  <CardTitle>{app.name}</CardTitle>
+                  <CardDescription className="truncate">
+                    {email?.address}
+                  </CardDescription>
+                  <CardAction>{menu}</CardAction>
+                </CardHeader>
+                <CardFooter className="flex-wrap gap-2 text-xs text-muted-foreground">
+                  <Badge
+                    variant="secondary"
+                    style={{ color }}
+                    className="font-medium"
+                  >
+                    {email?.label}
+                  </Badge>
+                  {app.category && (
+                    <Badge variant="outline">{app.category}</Badge>
+                  )}
+                  {app.signupDate && (
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="size-3" />
+                      {app.signupDate}
+                    </span>
+                  )}
+                  {app.notes && (
+                    <span
+                      className="inline-flex items-center gap-1"
+                      title={app.notes}
                     >
-                      {email?.label}
-                    </Badge>
-                    {app.category && (
-                      <Badge variant="outline">{app.category}</Badge>
-                    )}
-                    {app.signupDate && (
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="size-3" />
-                        {app.signupDate}
-                      </span>
-                    )}
-                    {app.notes && (
-                      <span
-                        className="inline-flex items-center gap-1"
-                        title={app.notes}
-                      >
-                        <StickyNote className="size-3" />
-                        Note
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
+                      <StickyNote className="size-3" />
+                      Note
+                    </span>
+                  )}
+                </CardFooter>
               </Card>
             );
           })}
