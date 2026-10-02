@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Globe, Loader2, Plus } from 'lucide-react';
+import { Globe, Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -186,7 +186,6 @@ function AppForm({
       url: (form.get('url') as string) || null,
       categoryId: categoryId === NO_CATEGORY ? null : categoryId,
       notes: (form.get('notes') as string) || null,
-      signupDate: (form.get('signupDate') as string) || null,
     };
 
     const { error } = editing
@@ -271,8 +270,7 @@ function AppForm({
             </Select>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="grid gap-2">
+          <div className="grid gap-2">
               <Label>Category</Label>
               {addingCategory ? (
                 <div className="flex gap-2">
@@ -303,6 +301,18 @@ function AppForm({
                       <Plus className="size-4" />
                     )}
                   </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Cancel new category"
+                    onClick={() => {
+                      setAddingCategory(false);
+                      setNewCategoryName('');
+                    }}
+                  >
+                    <X className="size-4" />
+                  </Button>
                 </div>
               ) : (
                 <Select value={categoryId} onValueChange={handleCategorySelect}>
@@ -324,16 +334,6 @@ function AppForm({
                   </SelectContent>
                 </Select>
               )}
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="signupDate">Signup date</Label>
-              <Input
-                id="signupDate"
-                name="signupDate"
-                type="date"
-                defaultValue={editing?.signupDate ?? ''}
-              />
-            </div>
           </div>
 
           <div className="grid gap-2">

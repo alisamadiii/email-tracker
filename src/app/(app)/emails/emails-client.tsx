@@ -5,6 +5,7 @@ import { Loader2, Mail, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { createEmail, deleteEmail, updateEmail } from '@/app/actions/emails';
+import { CopyText } from '@/components/copy-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -135,9 +136,12 @@ export function EmailsClient({ emails }: { emails: EmailRow[] }) {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{email.label}</p>
-                  <p className="truncate text-sm text-muted-foreground">
+                  <CopyText
+                    text={email.address}
+                    className="block max-w-full truncate text-left text-sm text-muted-foreground"
+                  >
                     {email.address}
-                  </p>
+                  </CopyText>
                 </div>
                 <Badge variant="secondary">
                   {email.usageCount} app{email.usageCount === 1 ? '' : 's'}

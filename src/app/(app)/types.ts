@@ -17,7 +17,6 @@ export type AppRow = {
   url: string | null;
   categoryId: string | null;
   notes: string | null;
-  signupDate: string | null;
   favicon: string | null;
   createdAt: string;
 };

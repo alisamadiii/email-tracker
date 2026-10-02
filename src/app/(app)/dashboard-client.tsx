@@ -5,6 +5,8 @@ import Link from 'next/link';
 import {
   ArrowUpDown,
   Calendar,
+  Download,
+  Layers,
   LayoutGrid,
   List,
   Mail,
@@ -18,6 +20,7 @@ import {
 import { toast } from 'sonner';
 
 import { deleteAppAccount } from '@/app/actions/app-accounts';
+import { CopyText } from '@/components/copy-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,12 +53,11 @@ import { cn } from '@/lib/utils';
 import { AppDialog } from './app-dialog';
 import type { AppRow, CategoryOption, EmailOption } from './types';
 
-type SortKey = 'recent' | 'name' | 'signupDate';
+type SortKey = 'recent' | 'name';
 
 const SORT_LABELS: Record<SortKey, string> = {
   recent: 'Recently added',
   name: 'Name',
-  signupDate: 'Signup date',
 };
 
 const ALL = 'all';
@@ -106,6 +108,7 @@ export function DashboardClient({
   const [categoryFilter, setCategoryFilter] = useState(ALL);
   const [sort, setSort] = useState<SortKey>('recent');
   const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [groupByDomain, setGroupByDomain] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AppRow | null>(null);
 
@@ -140,11 +143,61 @@ export function DashboardClient({
 
     return filtered.sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'signupDate')
-        return (b.signupDate ?? '').localeCompare(a.signupDate ?? '');
       return b.createdAt.localeCompare(a.createdAt);
     });
   }, [apps, search, emailFilter, categoryFilter, sort, categoryById]);
+
+  // Sections keyed by the domain of the email each app was signed up with.
+  const grouped = useMemo(() => {
+    if (!groupByDomain) return null;
+    const map = new Map<string, AppRow[]>();
+    for (const app of visible) {
+      const address = emailById.get(app.emailId)?.address ?? '';
+      const domain = address.split('@')[1] ?? 'unknown';
+      map.set(domain, [...(map.get(domain) ?? []), app]);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [groupByDomain, visible, emailById]);
+
+  function exportCsv() {
+    const esc = (v: string | null | undefined) =>
+      `"${String(v ?? '').replaceAll('"', '""')}"`;
+    const header = [
+      'name',
+      'url',
+      'email_label',
+      'email_address',
+      'category',
+      'notes',
+      'created_at',
+    ].join(',');
+    const rows = apps.map((a) => {
+      const email = emailById.get(a.emailId);
+      const category = a.categoryId
+        ? categoryById.get(a.categoryId)?.name
+        : '';
+      return [
+        a.name,
+        a.url,
+        email?.label,
+        email?.address,
+        category,
+        a.notes,
+        a.createdAt,
+      ]
+        .map(esc)
+        .join(',');
+    });
+    const blob = new Blob([[header, ...rows].join('\n')], {
+      type: 'text/csv;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'email-tracker-export.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   function openAdd() {
     setEditing(null);
@@ -164,6 +217,99 @@ export function DashboardClient({
     }
     toast.success(`${app.name} deleted`);
   }
+
+  const gridClass =
+    view === 'grid'
+      ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3'
+      : 'grid gap-2';
+
+  const renderApp = (app: AppRow) => {
+    const email = emailById.get(app.emailId);
+    const color = email?.color ?? '#6366f1';
+    const categoryName = app.categoryId
+      ? categoryById.get(app.categoryId)?.name
+      : null;
+    const menu = (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Actions for ${app.name}`}
+            className="text-muted-foreground"
+          >
+            <MoreVertical className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => openEdit(app)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => handleDelete(app)}
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+
+    if (view === 'list') {
+      return (
+        <Card key={app.id} size="sm">
+          <CardContent className="flex items-center gap-3">
+            <AppIcon app={app} color={color} className="size-8" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{app.name}</p>
+              <CopyText
+                text={email?.address ?? ''}
+                className="block max-w-full truncate text-left text-xs text-muted-foreground"
+              >
+                {email?.address}
+              </CopyText>
+            </div>
+            {categoryName && <Badge variant="outline">{categoryName}</Badge>}
+            <Badge variant="secondary" style={{ color }} className="font-medium">
+              {email?.label}
+            </Badge>
+            {menu}
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card key={app.id}>
+        <CardHeader>
+          <AppIcon app={app} color={color} className="mb-2" />
+          <CardTitle>{app.name}</CardTitle>
+          <CardDescription className="truncate">
+            <CopyText text={email?.address ?? ''}>{email?.address}</CopyText>
+          </CardDescription>
+          <CardAction>{menu}</CardAction>
+        </CardHeader>
+        <CardFooter className="flex-wrap gap-2 text-xs text-muted-foreground">
+          <Badge variant="secondary" style={{ color }} className="font-medium">
+            {email?.label}
+          </Badge>
+          {categoryName && <Badge variant="outline">{categoryName}</Badge>}
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="size-3" />
+            {app.createdAt.slice(0, 10)}
+          </span>
+          {app.notes && (
+            <span className="inline-flex items-center gap-1" title={app.notes}>
+              <StickyNote className="size-3" />
+              Note
+            </span>
+          )}
+        </CardFooter>
+      </Card>
+    );
+  };
 
   if (emails.length === 0) {
     return (
@@ -295,6 +441,26 @@ export function DashboardClient({
             <LayoutGrid className="size-4" />
           </Button>
         </div>
+
+        <Button
+          variant={groupByDomain ? 'secondary' : 'outline'}
+          size="icon"
+          aria-label="Group by email domain"
+          title="Group by email domain"
+          onClick={() => setGroupByDomain((v) => !v)}
+        >
+          <Layers className="size-4" />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Export CSV"
+          title="Export CSV"
+          onClick={exportCsv}
+        >
+          <Download className="size-4" />
+        </Button>
       </div>
 
       {/* Apps */}
@@ -318,115 +484,28 @@ export function DashboardClient({
           </CardContent>
         </Card>
       ) : (
-        <div
-          className={cn(
-            view === 'grid'
-              ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3'
-              : 'grid gap-2'
+        <>
+          {grouped ? (
+            <div className="grid gap-8">
+              {grouped.map(([domain, domainApps]) => (
+                <section key={domain} className="grid gap-3">
+                  <div className="flex items-baseline gap-2">
+                    <h2 className="text-lg font-semibold capitalize">
+                      {domain.split('.')[0]}
+                    </h2>
+                    <span className="text-sm text-muted-foreground">
+                      {domain} · {domainApps.length} app
+                      {domainApps.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div className={gridClass}>{domainApps.map(renderApp)}</div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className={gridClass}>{visible.map(renderApp)}</div>
           )}
-        >
-          {visible.map((app) => {
-            const email = emailById.get(app.emailId);
-            const color = email?.color ?? '#6366f1';
-            const categoryName = app.categoryId
-              ? categoryById.get(app.categoryId)?.name
-              : null;
-            const menu = (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Actions for ${app.name}`}
-                    className="text-muted-foreground"
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => openEdit(app)}>
-                    <Pencil className="size-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => handleDelete(app)}
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            );
-
-            if (view === 'list') {
-              return (
-                <Card key={app.id} size="sm">
-                  <CardContent className="flex items-center gap-3">
-                    <AppIcon app={app} color={color} className="size-8" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{app.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {email?.address}
-                      </p>
-                    </div>
-                    {categoryName && (
-                      <Badge variant="outline">{categoryName}</Badge>
-                    )}
-                    <Badge
-                      variant="secondary"
-                      style={{ color }}
-                      className="font-medium"
-                    >
-                      {email?.label}
-                    </Badge>
-                    {menu}
-                  </CardContent>
-                </Card>
-              );
-            }
-
-            return (
-              <Card key={app.id}>
-                <CardHeader>
-                  <AppIcon app={app} color={color} className="mb-2" />
-                  <CardTitle>{app.name}</CardTitle>
-                  <CardDescription className="truncate">
-                    {email?.address}
-                  </CardDescription>
-                  <CardAction>{menu}</CardAction>
-                </CardHeader>
-                <CardFooter className="flex-wrap gap-2 text-xs text-muted-foreground">
-                  <Badge
-                    variant="secondary"
-                    style={{ color }}
-                    className="font-medium"
-                  >
-                    {email?.label}
-                  </Badge>
-                  {categoryName && (
-                    <Badge variant="outline">{categoryName}</Badge>
-                  )}
-                  {app.signupDate && (
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="size-3" />
-                      {app.signupDate}
-                    </span>
-                  )}
-                  {app.notes && (
-                    <span
-                      className="inline-flex items-center gap-1"
-                      title={app.notes}
-                    >
-                      <StickyNote className="size-3" />
-                      Note
-                    </span>
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
+        </>
       )}
 
       <AppDialog

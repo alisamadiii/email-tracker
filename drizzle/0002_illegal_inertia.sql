@@ -1,0 +1,1 @@
+ALTER TABLE "app_accounts" DROP COLUMN "signup_date";

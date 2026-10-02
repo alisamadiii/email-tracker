@@ -14,7 +14,6 @@ type AppAccountInput = {
   url: string | null;
   categoryId: string | null;
   notes: string | null;
-  signupDate: string | null;
 };
 
 function clean(input: AppAccountInput) {
@@ -24,7 +23,6 @@ function clean(input: AppAccountInput) {
     url: input.url?.trim() || null,
     categoryId: input.categoryId || null,
     notes: input.notes?.trim() || null,
-    signupDate: input.signupDate || null,
   };
 }
 

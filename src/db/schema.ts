@@ -4,7 +4,6 @@ import {
   timestamp,
   boolean,
   uuid,
-  date,
   unique,
 } from 'drizzle-orm/pg-core';
 
@@ -101,7 +100,6 @@ export const appAccounts = pgTable('app_accounts', {
     onDelete: 'set null',
   }),
   notes: text('notes'),
-  signupDate: date('signup_date'),
   favicon: text('favicon'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

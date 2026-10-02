@@ -39,7 +39,6 @@ export default async function DashboardPage() {
         url: a.url,
         categoryId: a.categoryId,
         notes: a.notes,
-        signupDate: a.signupDate,
         favicon: a.favicon,
         createdAt: a.createdAt.toISOString(),
       }))}

@@ -82,10 +82,10 @@ export function AppHeader({ name, email }: { name: string; email: string }) {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="min-w-56">
               <DropdownMenuLabel>
                 <div className="font-medium">{name}</div>
-                <div className="text-xs font-normal text-muted-foreground">
+                <div className="text-xs font-normal break-all text-muted-foreground">
                   {email}
                 </div>
               </DropdownMenuLabel>
