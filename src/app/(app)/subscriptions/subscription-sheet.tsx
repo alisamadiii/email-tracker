@@ -37,12 +37,21 @@ import {
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { CYCLE_LABELS, CYCLES } from '@/lib/subscriptions/cycles';
 import type { SubscriptionInput } from '@/lib/subscriptions/schemas';
 
+import { PaymentMethodForm, methodDetail } from './payment-method-form';
 import type {
   CategoryOption,
   CurrencyOption,
+  EmailChoice,
   MemberOption,
   PaymentMethodOption,
   SubscriptionRow,
@@ -58,6 +67,7 @@ type Props = {
   categories: CategoryOption[];
   methods: PaymentMethodOption[];
   members: MemberOption[];
+  emailChoices: EmailChoice[];
   allSubscriptions: SubscriptionRow[];
   mainCurrencyId: string | null;
 };
@@ -91,10 +101,17 @@ function SubscriptionForm({
   categories,
   methods,
   members,
+  emailChoices,
   allSubscriptions,
   mainCurrencyId,
 }: Props) {
   const today = new Date().toISOString().slice(0, 10);
+  const [methodDialogOpen, setMethodDialogOpen] = React.useState(false);
+  // Inline-created method: selected only once revalidation delivers it in
+  // `methods`, so the Select never holds a value without a matching item.
+  const [pendingMethodId, setPendingMethodId] = React.useState<string | null>(
+    null
+  );
 
   const [form, setForm] = React.useState({
     name: editing?.name ?? '',
@@ -107,7 +124,7 @@ function SubscriptionForm({
     cycle: editing?.cycle ?? CYCLES.monthly,
     frequency: editing?.frequency ?? 1,
     categoryId: editing?.categoryId ?? NONE,
-    paymentMethodId: editing?.paymentMethodId ?? NONE,
+    paymentMethodId: editing?.paymentMethodId ?? '',
     payerMemberId: editing?.payerMemberId ?? NONE,
     notify: editing?.notify ?? true,
     notifyDaysBefore: editing?.notifyDaysBefore ?? -1,
@@ -123,8 +140,19 @@ function SubscriptionForm({
 
   const oneTime = form.cycle === CYCLES.oneTime;
 
+  React.useEffect(() => {
+    if (pendingMethodId && methods.some((m) => m.id === pendingMethodId)) {
+      setForm((f) => ({ ...f, paymentMethodId: pendingMethodId }));
+      setPendingMethodId(null);
+    }
+  }, [pendingMethodId, methods]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.paymentMethodId) {
+      toast.error('Pick a payment method — add one with the + button');
+      return;
+    }
     setSaving(true);
 
     const input: SubscriptionInput = {
@@ -138,7 +166,7 @@ function SubscriptionForm({
       cycle: form.cycle,
       frequency: form.frequency,
       categoryId: form.categoryId === NONE ? '' : form.categoryId,
-      paymentMethodId: form.paymentMethodId === NONE ? '' : form.paymentMethodId,
+      paymentMethodId: form.paymentMethodId,
       payerMemberId: form.payerMemberId === NONE ? '' : form.payerMemberId,
       notify: form.notify,
       notifyDaysBefore: form.notifyDaysBefore,
@@ -298,24 +326,37 @@ function SubscriptionForm({
           <SectionTitle>Assignment</SectionTitle>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Payment method">
-              <Select
-                value={form.paymentMethodId}
-                onValueChange={(v) => set('paymentMethodId', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>None</SelectItem>
-                  {methods
-                    .filter((m) => m.enabled || m.id === form.paymentMethodId)
-                    .map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  value={form.paymentMethodId}
+                  onValueChange={(v) => set('paymentMethodId', v)}
+                >
+                  <SelectTrigger className="min-w-0 flex-1">
+                    <SelectValue placeholder="Pick one" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {methods
+                      .filter((m) => m.enabled || m.id === form.paymentMethodId)
+                      .map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name}
+                          {methodDetail(m) && m.type !== 'card'
+                            ? ` (${methodDetail(m)})`
+                            : ''}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  title="Add payment method"
+                  onClick={() => setMethodDialogOpen(true)}
+                >
+                  +
+                </Button>
+              </div>
             </Field>
             <Field label="Paid by">
               <Select
@@ -440,6 +481,28 @@ function SubscriptionForm({
           {editing ? 'Save changes' : 'Add subscription'}
         </Button>
       </SheetFooter>
+
+      <Dialog open={methodDialogOpen} onOpenChange={setMethodDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-heading">
+              New payment method
+            </DialogTitle>
+            <DialogDescription>
+              At minimum the last 4 digits, so you know which card pays this.
+            </DialogDescription>
+          </DialogHeader>
+          {methodDialogOpen && (
+            <PaymentMethodForm
+              emailChoices={emailChoices}
+              onSaved={(id) => {
+                setPendingMethodId(id);
+                setMethodDialogOpen(false);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

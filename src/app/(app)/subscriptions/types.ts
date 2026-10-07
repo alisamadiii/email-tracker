@@ -7,8 +7,17 @@ export type CurrencyOption = {
 };
 
 export type CategoryOption = { id: string; name: string };
-export type PaymentMethodOption = { id: string; name: string; enabled: boolean };
+export type PaymentMethodOption = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  type: 'card' | 'paypal' | 'other';
+  cardKind: 'credit' | 'debit' | null;
+  last4: string | null;
+  emailAddress: string | null;
+};
 export type MemberOption = { id: string; name: string; email: string | null };
+export type EmailChoice = { id: string; label: string; address: string };
 
 export type SettingsView = {
   mainCurrencyId: string | null;

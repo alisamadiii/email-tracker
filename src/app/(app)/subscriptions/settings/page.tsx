@@ -31,6 +31,7 @@ export default async function SettingsPage() {
       currencies={data.currencies}
       methods={data.methods}
       members={data.members}
+      emailChoices={data.emailChoices}
       channels={channels}
     />
   );

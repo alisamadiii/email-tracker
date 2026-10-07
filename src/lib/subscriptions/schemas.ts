@@ -26,7 +26,7 @@ export const subscriptionInputSchema = z.object({
   cycle: z.coerce.number().int().min(1).max(5),
   frequency: z.coerce.number().int().min(1).max(10),
   categoryId: uuidOrNull,
-  paymentMethodId: uuidOrNull,
+  paymentMethodId: z.uuid('Pick a payment method'),
   payerMemberId: uuidOrNull,
   notify: z.coerce.boolean(),
   notifyDaysBefore: z.coerce.number().int().min(-1).max(365),
@@ -44,6 +44,35 @@ export type SubscriptionInput = z.input<typeof subscriptionInputSchema>;
 export const namedItemSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
 });
+
+export const paymentMethodInputSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('card'),
+    cardKind: z.enum(['credit', 'debit']),
+    last4: z.string().trim().regex(/^\d{4}$/, 'Enter the last 4 digits'),
+    name: z.string().trim().default(''),
+  }),
+  z.object({
+    type: z.literal('paypal'),
+    emailId: z
+      .string()
+      .transform((v) => v || null)
+      .pipe(z.uuid().nullable()),
+    newEmailAddress: z
+      .string()
+      .trim()
+      .transform((v) => v || null)
+      .pipe(z.email('Invalid email').nullable()),
+    newEmailLabel: z.string().trim().default(''),
+    name: z.string().trim().default(''),
+  }),
+  z.object({
+    type: z.literal('other'),
+    name: z.string().trim().min(1, 'Name is required'),
+  }),
+]);
+
+export type PaymentMethodInput = z.input<typeof paymentMethodInputSchema>;
 
 export const householdMemberSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),

@@ -6,6 +6,7 @@ import type { ChannelType } from '@/lib/notifications/types';
 import type {
   CategoryOption,
   CurrencyOption,
+  EmailChoice,
   MemberOption,
   PaymentMethodOption,
   SettingsView,
@@ -30,6 +31,7 @@ type Props = {
   currencies: CurrencyOption[];
   methods: PaymentMethodOption[];
   members: MemberOption[];
+  emailChoices: EmailChoice[];
   channels: ChannelView[];
 };
 
@@ -39,6 +41,7 @@ export function SettingsClient({
   currencies,
   methods,
   members,
+  emailChoices,
   channels,
 }: Props) {
   return (
@@ -79,7 +82,7 @@ export function SettingsClient({
           <CurrenciesTab currencies={currencies} settings={settings} />
         </TabsContent>
         <TabsContent value="payment-methods">
-          <PaymentMethodsTab methods={methods} />
+          <PaymentMethodsTab methods={methods} emailChoices={emailChoices} />
         </TabsContent>
         <TabsContent value="display">
           <DisplayTab settings={settings} />

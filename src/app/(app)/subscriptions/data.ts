@@ -3,6 +3,7 @@ import { asc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   currencies,
+  emails,
   householdMembers,
   paymentMethods,
   subscriptionCategories,
@@ -13,6 +14,7 @@ import {
 import type {
   CategoryOption,
   CurrencyOption,
+  EmailChoice,
   MemberOption,
   PaymentMethodOption,
   SettingsView,
@@ -59,10 +61,14 @@ export async function loadSubscriptionData(userId: string) {
         .where(eq(subscriptionCategories.userId, userId))
         .orderBy(asc(subscriptionCategories.sortOrder)),
       db
-        .select()
+        .select({
+          method: paymentMethods,
+          emailAddress: emails.address,
+        })
         .from(paymentMethods)
+        .leftJoin(emails, eq(paymentMethods.emailId, emails.id))
         .where(eq(paymentMethods.userId, userId))
-        .orderBy(asc(paymentMethods.sortOrder)),
+        .orderBy(asc(paymentMethods.sortOrder), asc(paymentMethods.createdAt)),
       db
         .select()
         .from(householdMembers)
@@ -70,6 +76,12 @@ export async function loadSubscriptionData(userId: string) {
         .orderBy(asc(householdMembers.createdAt)),
       db.select().from(userSettings).where(eq(userSettings.userId, userId)),
     ]);
+
+  const emailChoices: EmailChoice[] = await db
+    .select({ id: emails.id, label: emails.label, address: emails.address })
+    .from(emails)
+    .where(eq(emails.userId, userId))
+    .orderBy(asc(emails.createdAt));
 
   const rows: SubscriptionRow[] = subs.map((r) => ({
     id: r.sub.id,
@@ -130,12 +142,17 @@ export async function loadSubscriptionData(userId: string) {
       (c): CategoryOption => ({ id: c.id, name: c.name })
     ),
     methods: methodRows.map(
-      (m): PaymentMethodOption => ({
-        id: m.id,
-        name: m.name,
-        enabled: m.enabled,
+      (r): PaymentMethodOption => ({
+        id: r.method.id,
+        name: r.method.name,
+        enabled: r.method.enabled,
+        type: r.method.type,
+        cardKind: r.method.cardKind,
+        last4: r.method.last4,
+        emailAddress: r.emailAddress,
       })
     ),
+    emailChoices,
     members: memberRows.map(
       (m): MemberOption => ({ id: m.id, name: m.name, email: m.email })
     ),

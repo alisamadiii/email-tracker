@@ -14,6 +14,7 @@ export default async function SubscriptionsPage() {
       categories={data.categories}
       methods={data.methods}
       members={data.members}
+      emailChoices={data.emailChoices}
       settings={data.settings}
     />
   );

@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   currencies,
-  paymentMethods,
   subscriptionCategories,
   userSettings,
 } from '@/db/schema';
@@ -32,15 +31,6 @@ const DEFAULT_CATEGORIES = [
   'Other',
 ];
 
-const DEFAULT_PAYMENT_METHODS = [
-  { name: 'Credit Card', icon: 'credit-card' },
-  { name: 'Debit Card', icon: 'credit-card' },
-  { name: 'PayPal', icon: 'wallet' },
-  { name: 'Bank Transfer', icon: 'landmark' },
-  { name: 'Apple Pay', icon: 'smartphone' },
-  { name: 'Google Pay', icon: 'smartphone' },
-];
-
 // Idempotent: the user_settings row doubles as the "already seeded" marker.
 export async function ensureSubscriptionDefaults(userId: string) {
   const existing = await db
@@ -60,14 +50,6 @@ export async function ensureSubscriptionDefaults(userId: string) {
       DEFAULT_CATEGORIES.map((name, i) => ({
         userId,
         name,
-        sortOrder: i,
-      }))
-    );
-
-    await tx.insert(paymentMethods).values(
-      DEFAULT_PAYMENT_METHODS.map((m, i) => ({
-        ...m,
-        userId,
         sortOrder: i,
       }))
     );

@@ -149,12 +149,22 @@ export const subscriptionCategories = pgTable(
   (t) => [unique().on(t.userId, t.name)]
 );
 
+// type 'card' carries cardKind + last4; 'paypal' links an email from the
+// email module (the one deliberate bridge between the two modules).
 export const paymentMethods = pgTable('payment_methods', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  type: text('type', { enum: ['card', 'paypal', 'other'] })
+    .notNull()
+    .default('other'),
+  cardKind: text('card_kind', { enum: ['credit', 'debit'] }),
+  last4: text('last4'),
+  emailId: uuid('email_id').references(() => emails.id, {
+    onDelete: 'set null',
+  }),
   icon: text('icon'),
   sortOrder: integer('sort_order').notNull().default(0),
   enabled: boolean('enabled').notNull().default(true),

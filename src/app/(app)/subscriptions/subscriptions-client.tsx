@@ -60,6 +60,7 @@ import { SubscriptionSheet } from './subscription-sheet';
 import type {
   CategoryOption,
   CurrencyOption,
+  EmailChoice,
   MemberOption,
   PaymentMethodOption,
   SettingsView,
@@ -72,6 +73,7 @@ type Props = {
   categories: CategoryOption[];
   methods: PaymentMethodOption[];
   members: MemberOption[];
+  emailChoices: EmailChoice[];
   settings: SettingsView;
 };
 
@@ -83,6 +85,7 @@ export function SubscriptionsClient({
   categories,
   methods,
   members,
+  emailChoices,
   settings,
 }: Props) {
   const [search, setSearch] = React.useState('');
@@ -281,6 +284,7 @@ export function SubscriptionsClient({
         categories={categories}
         methods={methods}
         members={members}
+        emailChoices={emailChoices}
         allSubscriptions={rows}
         mainCurrencyId={settings.mainCurrencyId}
       />
