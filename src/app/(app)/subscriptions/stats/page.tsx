@@ -11,6 +11,9 @@ export default async function StatsPage() {
   const statSubs: StatSub[] = data.rows.map((r) => ({
     id: r.id,
     name: r.name,
+    logo: r.logo,
+    startDate: r.startDate,
+    cancellationDate: r.cancellationDate,
     price: r.price,
     rate: r.currencyRate,
     cycle: r.cycle,

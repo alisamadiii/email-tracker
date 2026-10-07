@@ -9,7 +9,6 @@ import {
   CalendarDays,
   LayoutGrid,
   LogOut,
-  Mail,
   Moon,
   Settings,
   Sun,
@@ -89,9 +88,7 @@ export function AppSidebar({ name, email }: { name: string; email: string }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
-            <Wallet className="mr-1.5 size-3.5" /> Subscriptions
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Subscriptions</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {SUBSCRIPTION_NAV.map((item) => (
@@ -113,9 +110,7 @@ export function AppSidebar({ name, email }: { name: string; email: string }) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>
-            <Mail className="mr-1.5 size-3.5" /> Email
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Email</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {EMAIL_NAV.map((item) => (
