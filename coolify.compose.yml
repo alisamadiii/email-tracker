@@ -6,11 +6,12 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - SERVICE_FQDN_EMAILTRACKER_3000
+      - SERVICE_FQDN_EMAIL_TRACKER_3000
       - DATABASE_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/email_tracker
       - BETTER_AUTH_SECRET=${SERVICE_BASE64_64_AUTHSECRET}
-      # Bare SERVICE_FQDN has no scheme/port — Better Auth needs the scheme.
-      - BETTER_AUTH_URL=https://${SERVICE_FQDN_EMAILTRACKER}
+      # Coolify derives var names from the service name: email-tracker -> EMAIL_TRACKER.
+      # SERVICE_URL_* already includes the https:// scheme Better Auth needs.
+      - BETTER_AUTH_URL=${SERVICE_URL_EMAIL_TRACKER}
     depends_on:
       postgres:
         condition: service_healthy
