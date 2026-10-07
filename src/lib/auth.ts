@@ -54,6 +54,11 @@ export const auth = betterAuth({
       },
     },
   },
+  advanced: {
+    // Other apps on *.alisamadii.com set a parent-domain Better Auth cookie with
+    // the default name; a unique prefix stops the duplicate-cookie collision.
+    cookiePrefix: 'email-tracker',
+  },
   plugins: [nextCookies()],
 });
 
