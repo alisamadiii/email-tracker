@@ -70,8 +70,9 @@ async function validateRefs(
 }
 
 function toRow(input: ReturnType<typeof subscriptionInputSchema.parse>) {
+  const { logo: _logo, clearLogo: _clearLogo, ...rest } = input;
   return {
-    ...input,
+    ...rest,
     price: input.price.toFixed(2),
   };
 }
@@ -86,7 +87,7 @@ export async function createSubscription(raw: SubscriptionInput) {
   const error = await validateRefs(user.id, parsed.data);
   if (error) return { error };
 
-  const logo = await fetchFavicon(parsed.data.url);
+  const logo = parsed.data.logo ?? (await fetchFavicon(parsed.data.url));
   await db
     .insert(subscriptions)
     .values({ ...toRow(parsed.data), userId: user.id, logo });
@@ -113,10 +114,14 @@ export async function updateSubscription(id: string, raw: SubscriptionInput) {
   });
   if (!existing) return { error: 'Subscription not found' };
 
-  const logo =
-    parsed.data.url === existing.url
-      ? existing.logo
-      : await fetchFavicon(parsed.data.url);
+  // Explicit upload wins; removal re-derives from the favicon; otherwise keep
+  // the stored logo and only re-derive when the URL changed.
+  const logo = parsed.data.clearLogo
+    ? await fetchFavicon(parsed.data.url)
+    : (parsed.data.logo ??
+      (parsed.data.url === existing.url
+        ? existing.logo
+        : await fetchFavicon(parsed.data.url)));
 
   await db
     .update(subscriptions)

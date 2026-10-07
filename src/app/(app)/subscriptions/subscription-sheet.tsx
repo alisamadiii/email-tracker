@@ -113,6 +113,13 @@ function SubscriptionForm({
     null
   );
 
+  // null = no custom logo (favicon-derived); string = uploaded/stored data URL.
+  const [logoData, setLogoData] = React.useState<string | null>(
+    editing?.logo ?? null
+  );
+  const [logoTouched, setLogoTouched] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const [form, setForm] = React.useState({
     name: editing?.name ?? '',
     url: editing?.url ?? '',
@@ -158,6 +165,8 @@ function SubscriptionForm({
     const input: SubscriptionInput = {
       name: form.name,
       url: form.url,
+      logo: logoTouched && logoData ? logoData : '',
+      clearLogo: logoTouched && !logoData,
       price: form.price,
       currencyId: form.currencyId,
       nextPayment: form.nextPayment,
@@ -206,13 +215,71 @@ function SubscriptionForm({
               required
             />
           </Field>
-          <Field label="Website" hint="Used to fetch the logo">
+          <Field label="Website" hint="Used to fetch the logo automatically">
             <Input
               value={form.url}
               onChange={(e) => set('url', e.target.value)}
               placeholder="https://netflix.com"
               type="url"
             />
+          </Field>
+          <Field
+            label="Logo"
+            hint="Optional — upload your own when there is no website"
+          >
+            <div className="flex items-center gap-3">
+              {logoData ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoData}
+                  alt=""
+                  className="size-10 rounded-lg object-contain ring-1 ring-border"
+                />
+              ) : (
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground">
+                  {form.name.slice(0, 2).toUpperCase() || '—'}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  try {
+                    const dataUrl = await fileToLogoDataUrl(file);
+                    setLogoData(dataUrl);
+                    setLogoTouched(true);
+                  } catch {
+                    toast.error('Could not read that image');
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload image
+              </Button>
+              {logoData && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setLogoData(null);
+                    setLogoTouched(true);
+                  }}
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
           </Field>
           <Field label="Category">
             <Select
@@ -505,6 +572,19 @@ function SubscriptionForm({
       </Dialog>
     </form>
   );
+}
+
+// Downscale to max 128px and re-encode so stored logos stay small.
+async function fileToLogoDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 128 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas unavailable');
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/png');
 }
 
 function DatePicker({

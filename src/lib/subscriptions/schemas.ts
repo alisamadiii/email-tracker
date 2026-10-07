@@ -7,6 +7,19 @@ const uuidOrNull = z
 
 export const subscriptionInputSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
+  // Custom uploaded logo (data URL). Empty = derive from the website favicon.
+  logo: z
+    .string()
+    .transform((v) => v || null)
+    .pipe(
+      z
+        .string()
+        .regex(/^data:image\/[\w.+-]+;base64,/, 'Invalid image')
+        .max(400_000, 'Logo too large — keep it under ~300KB')
+        .nullable()
+    ),
+  // True when the user removed a custom logo — falls back to the favicon.
+  clearLogo: z.coerce.boolean().default(false),
   url: z
     .string()
     .trim()
