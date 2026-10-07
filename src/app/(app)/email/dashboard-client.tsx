@@ -194,7 +194,7 @@ export function DashboardClient({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'email-tracker-export.csv';
+    link.download = 'business-tracker-export.csv';
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -325,7 +325,7 @@ export function DashboardClient({
             </p>
           </div>
           <Button asChild>
-            <Link href="/emails">
+            <Link href="/email/emails">
               <Plus className="size-4" />
               Add emails
             </Link>

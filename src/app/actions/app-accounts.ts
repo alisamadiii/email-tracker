@@ -59,8 +59,8 @@ export async function createAppAccount(input: AppAccountInput) {
 
   await db.insert(appAccounts).values({ ...values, userId: user.id, favicon });
 
-  revalidatePath('/');
-  revalidatePath('/emails');
+  revalidatePath('/email');
+  revalidatePath('/email/emails');
   return { error: null };
 }
 
@@ -87,8 +87,8 @@ export async function updateAppAccount(id: string, input: AppAccountInput) {
     .set({ ...values, favicon, updatedAt: new Date() })
     .where(and(eq(appAccounts.id, id), eq(appAccounts.userId, user.id)));
 
-  revalidatePath('/');
-  revalidatePath('/emails');
+  revalidatePath('/email');
+  revalidatePath('/email/emails');
   return { error: null };
 }
 
@@ -99,7 +99,7 @@ export async function deleteAppAccount(id: string) {
     .delete(appAccounts)
     .where(and(eq(appAccounts.id, id), eq(appAccounts.userId, user.id)));
 
-  revalidatePath('/');
-  revalidatePath('/emails');
+  revalidatePath('/email');
+  revalidatePath('/email/emails');
   return { error: null };
 }

@@ -17,8 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Email Tracker",
-  description: "Track which email you used for which app",
+  title: "Business Tracker",
+  description:
+    "Self-hosted tracker for your subscriptions and account emails",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

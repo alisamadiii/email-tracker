@@ -48,7 +48,7 @@ export function SignInForm() {
         <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Mail className="size-5" />
         </div>
-        <CardTitle>Email Tracker</CardTitle>
+        <CardTitle>Business Tracker</CardTitle>
         <CardDescription>Sign in to your account</CardDescription>
       </CardHeader>
       <CardContent>

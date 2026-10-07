@@ -1,17 +1,19 @@
 # Coolify "Docker Compose" resource — point it at this repo and this file.
 # Coolify builds the image from the Dockerfile and fills the SERVICE_* magic variables automatically.
+# Magic var names derive from the service name: business-tracker -> SERVICE_*_BUSINESS_TRACKER.
 services:
-  email-tracker:
+  business-tracker:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      - SERVICE_FQDN_EMAIL_TRACKER_3000
-      - DATABASE_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/email_tracker
+      - SERVICE_FQDN_BUSINESS_TRACKER_3000
+      - DATABASE_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/business_tracker
       - BETTER_AUTH_SECRET=${SERVICE_BASE64_64_AUTHSECRET}
-      # Coolify derives var names from the service name: email-tracker -> EMAIL_TRACKER.
-      # SERVICE_URL_* already includes the https:// scheme Better Auth needs.
-      - BETTER_AUTH_URL=${SERVICE_URL_EMAIL_TRACKER}
+      # SERVICE_URL_* includes the https:// scheme Better Auth needs.
+      - BETTER_AUTH_URL=${SERVICE_URL_BUSINESS_TRACKER}
+      - CRON_SECRET=${SERVICE_BASE64_64_CRONSECRET}
+      - TZ=${TZ:-UTC}
     depends_on:
       postgres:
         condition: service_healthy
@@ -27,9 +29,9 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
-      - POSTGRES_DB=email_tracker
+      - POSTGRES_DB=business_tracker
     volumes:
-      - et-db:/var/lib/postgresql/data
+      - bt-db:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
@@ -37,4 +39,4 @@ services:
       retries: 10
 
 volumes:
-  et-db:
+  bt-db:

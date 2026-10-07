@@ -7,9 +7,9 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=email_tracker
+      - POSTGRES_DB=business_tracker
     volumes:
-      - et-dev-db:/var/lib/postgresql/data
+      - bt-dev-db:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
@@ -17,4 +17,4 @@ services:
       retries: 10
 
 volumes:
-  et-dev-db:
+  bt-dev-db:

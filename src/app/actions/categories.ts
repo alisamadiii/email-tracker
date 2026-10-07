@@ -23,6 +23,6 @@ export async function createCategory(name: string) {
     .values({ userId: user.id, name: trimmed })
     .returning({ id: categories.id });
 
-  revalidatePath('/');
+  revalidatePath('/email');
   return { id: row.id, error: null };
 }

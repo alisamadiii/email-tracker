@@ -33,8 +33,8 @@ export async function createEmail(input: EmailInput) {
     color: input.color,
   });
 
-  revalidatePath('/');
-  revalidatePath('/emails');
+  revalidatePath('/email');
+  revalidatePath('/email/emails');
   return { error: null };
 }
 
@@ -53,8 +53,8 @@ export async function updateEmail(id: string, input: EmailInput) {
     })
     .where(and(eq(emails.id, id), eq(emails.userId, user.id)));
 
-  revalidatePath('/');
-  revalidatePath('/emails');
+  revalidatePath('/email');
+  revalidatePath('/email/emails');
   return { error: null };
 }
 
@@ -76,7 +76,7 @@ export async function deleteEmail(id: string) {
     .delete(emails)
     .where(and(eq(emails.id, id), eq(emails.userId, user.id)));
 
-  revalidatePath('/');
-  revalidatePath('/emails');
+  revalidatePath('/email');
+  revalidatePath('/email/emails');
   return { error: null };
 }
