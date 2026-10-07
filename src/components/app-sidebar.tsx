@@ -12,6 +12,7 @@ import {
   Moon,
   Settings,
   Sun,
+  UserCog,
   Wallet,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -159,6 +160,12 @@ export function AppSidebar({ name, email }: { name: string; email: string }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/account">
+                    <UserCog className="size-4" />
+                    Account settings
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
                     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')

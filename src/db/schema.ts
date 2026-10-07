@@ -22,6 +22,8 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
   role: text('role').notNull().default('user'),
+  // Read/write API access token (Wallos-style, visible in Account settings).
+  apiKey: text('api_key').unique(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

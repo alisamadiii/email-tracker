@@ -6,7 +6,6 @@ import {
   subscriptionCategories,
   userSettings,
 } from '@/db/schema';
-import { importPersonalSubscriptions } from './import/personal';
 
 const DEFAULT_CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
@@ -60,7 +59,5 @@ export async function ensureSubscriptionDefaults(userId: string) {
       userId,
       mainCurrencyId: usd?.id,
     });
-
-    await importPersonalSubscriptions(tx, userId);
   });
 }
