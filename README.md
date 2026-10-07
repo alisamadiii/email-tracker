@@ -26,15 +26,15 @@ Open http://localhost:3000 — you'll be sent to sign-up to create the owner acc
 docker compose up --build
 ```
 
-## Deploy on Coolify (GHCR image)
+## Deploy on Coolify (build from source)
 
-Every push to `main` builds and pushes `ghcr.io/alisamadiii/email-tracker:latest` via GitHub Actions.
+Coolify builds the image straight from this repo — no registry involved.
 
-1. In Coolify, create a **Docker Compose** resource and paste `coolify.compose.yml`.
+1. In Coolify, create a resource from the GitHub repo (branch `main`) with the **Docker Compose** build pack, compose file location `coolify.compose.yml`.
 2. Coolify auto-generates `SERVICE_PASSWORD_POSTGRES`, `SERVICE_BASE64_64_AUTHSECRET`, and the FQDN variable — set your domain on the `email-tracker` service (port 3000).
 3. Deploy. Migrations run on boot; open the domain and create your owner account.
 
-To update: push to `main`, wait for the Action, then redeploy in Coolify (or enable auto-pull).
+To update: push to `main`. With the Coolify GitHub App the webhook redeploys automatically; otherwise add the resource's webhook URL under GitHub → Settings → Webhooks (push events), or redeploy manually in Coolify.
 
 ## Environment variables
 

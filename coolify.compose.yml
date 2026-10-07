@@ -1,8 +1,10 @@
-# Paste this into Coolify as a "Docker Compose" resource.
-# Coolify fills the SERVICE_* magic variables automatically.
+# Coolify "Docker Compose" resource — point it at this repo and this file.
+# Coolify builds the image from the Dockerfile and fills the SERVICE_* magic variables automatically.
 services:
   email-tracker:
-    image: ghcr.io/alisamadiii/email-tracker:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - SERVICE_FQDN_EMAILTRACKER_3000
       - DATABASE_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/email_tracker
