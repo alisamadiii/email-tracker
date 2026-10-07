@@ -158,7 +158,7 @@ function BigStat({
 }) {
   return (
     <Card>
-      <CardContent className="space-y-3 py-5">
+      <CardContent className="space-y-3">
         <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
           {icon}
         </div>
@@ -291,7 +291,7 @@ function ExtremeCard({
   if (!entry) return null;
   return (
     <Card>
-      <CardContent className="flex items-center justify-between py-5">
+      <CardContent className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="font-heading text-xl font-bold">{entry.name}</p>

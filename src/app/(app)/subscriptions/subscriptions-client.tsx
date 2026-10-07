@@ -30,7 +30,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -234,7 +242,7 @@ export function SubscriptionsClient({
 
       {filtered.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <Wallet className="size-10 text-muted-foreground" />
             <p className="font-heading text-lg font-semibold">
               No subscriptions yet
@@ -307,7 +315,7 @@ function StatCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4 py-5">
+      <CardContent className="flex items-center gap-4">
         <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
           {icon}
         </div>
@@ -350,24 +358,22 @@ function SubscriptionCard({
         sub.inactive ? 'opacity-60 transition-opacity hover:opacity-90' : undefined
       }
     >
-      <CardContent className="space-y-4 py-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <SubLogo sub={sub} />
-            <div className="min-w-0">
-              <p className="truncate font-heading text-base font-semibold">
-                {sub.name}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {CYCLE_LABELS[sub.cycle]}
-                {sub.frequency > 1 && ` ×${sub.frequency}`}
-                {sub.payerName && ` · ${sub.payerName}`}
-              </p>
-            </div>
+      <CardHeader>
+        <div className="flex min-w-0 items-center gap-3">
+          <SubLogo sub={sub} />
+          <div className="min-w-0">
+            <CardTitle className="truncate font-semibold">{sub.name}</CardTitle>
+            <CardDescription>
+              {CYCLE_LABELS[sub.cycle]}
+              {sub.frequency > 1 && ` ×${sub.frequency}`}
+              {sub.payerName && ` · ${sub.payerName}`}
+            </CardDescription>
           </div>
+        </div>
+        <CardAction>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0">
+              <Button variant="ghost" size="icon">
                 <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
@@ -383,35 +389,33 @@ function SubscriptionCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </CardAction>
+      </CardHeader>
 
-        <div className="flex items-end justify-between">
-          <p className="font-heading text-2xl font-bold">{price}</p>
-          {!sub.inactive && !oneTime && (
-            <Badge variant={days <= 3 ? 'destructive' : days <= 7 ? 'default' : 'secondary'}>
-              {days === 0
-                ? 'Due today'
-                : days < 0
-                  ? 'Overdue'
-                  : `In ${days} day${days === 1 ? '' : 's'}`}
-            </Badge>
-          )}
-          {sub.inactive && <Badge variant="outline">Inactive</Badge>}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{format(parseISO(sub.nextPayment), 'MMM d, yyyy')}</span>
-          {sub.categoryName && (
-            <Badge variant="outline">{sub.categoryName}</Badge>
-          )}
-          {sub.paymentMethodName && (
-            <Badge variant="outline">{sub.paymentMethodName}</Badge>
-          )}
-          {!sub.autoRenew && !oneTime && !sub.inactive && (
-            <Badge variant="outline">Manual renew</Badge>
-          )}
-        </div>
+      <CardContent className="flex items-end justify-between">
+        <p className="font-heading text-2xl font-bold">{price}</p>
+        {!sub.inactive && !oneTime && (
+          <Badge variant={days <= 3 ? 'destructive' : days <= 7 ? 'default' : 'secondary'}>
+            {days === 0
+              ? 'Due today'
+              : days < 0
+                ? 'Overdue'
+                : `In ${days} day${days === 1 ? '' : 's'}`}
+          </Badge>
+        )}
+        {sub.inactive && <Badge variant="outline">Inactive</Badge>}
       </CardContent>
+
+      <CardFooter className="flex-wrap gap-2 text-xs text-muted-foreground">
+        <span>{format(parseISO(sub.nextPayment), 'MMM d, yyyy')}</span>
+        {sub.categoryName && <Badge variant="outline">{sub.categoryName}</Badge>}
+        {sub.paymentMethodName && (
+          <Badge variant="outline">{sub.paymentMethodName}</Badge>
+        )}
+        {!sub.autoRenew && !oneTime && !sub.inactive && (
+          <Badge variant="outline">Manual renew</Badge>
+        )}
+      </CardFooter>
     </Card>
   );
 }
